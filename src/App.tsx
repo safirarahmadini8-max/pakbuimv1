@@ -23,9 +23,24 @@ import {
   Video,
   Trash2,
   Edit3,
-  Plus
+  Plus,
+  TrendingUp,
+  PieChart as PieChartIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell,
+  Legend
+} from 'recharts';
 import { View, AgendaItem, Guest, RundownItem, SpeechDraft, HouseholdService, DocumentationItem } from './types';
 import { cn } from './utils';
 
@@ -63,91 +78,188 @@ const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean, onClose:
 );
 
 // View Components
-const DashboardView = ({ onAction, agendas }: { onAction: (type: string) => void, agendas: AgendaItem[] }) => (
-  <div className="space-y-6">
-    <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
-        <p className="text-slate-500">Selamat datang di Sistem PAKBUIM.</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={() => onAction('agenda')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2"
-        >
-          <Calendar className="w-4 h-4" />
-          Agenda Baru
-        </button>
-      </div>
-    </header>
+const DashboardView = ({ 
+  onAction, 
+  agendas, 
+  guests, 
+  services 
+}: { 
+  onAction: (type: string) => void, 
+  agendas: AgendaItem[],
+  guests: Guest[],
+  services: HouseholdService[]
+}) => {
+  // Process data for charts
+  const activityData = [
+    { name: 'Sen', protokol: 4, rumahTangga: 2 },
+    { name: 'Sel', protokol: agendas.length, rumahTangga: services.length },
+    { name: 'Rab', protokol: 3, rumahTangga: 5 },
+    { name: 'Kam', protokol: 5, rumahTangga: 3 },
+    { name: 'Jum', protokol: 2, rumahTangga: 4 },
+  ];
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {[
-        { label: 'Agenda Hari Ini', value: agendas.length.toString(), icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Tamu Protokol', value: '12', icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Draft Narasi', value: '3', icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50' },
-        { label: 'Layanan RT', value: '8', icon: Home, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-      ].map((stat, i) => (
+  const statusData = [
+    { name: 'Selesai', value: services.filter(s => s.status === 'Selesai').length || 1 },
+    { name: 'Proses', value: services.filter(s => s.status === 'Proses').length || 1 },
+    { name: 'Menunggu', value: services.filter(s => s.status === 'Menunggu').length || 2 },
+  ];
+
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b'];
+
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+          <p className="text-slate-500">Selamat datang di Sistem PAKBUIM.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => onAction('agenda')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
+            Agenda Baru
+          </button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Agenda Hari Ini', value: agendas.length.toString(), icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Tamu Protokol', value: guests.length.toString(), icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Draft Narasi', value: '3', icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Layanan RT', value: services.length.toString(), icon: Home, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        ].map((stat, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={cn("p-2 rounded-xl", stat.bg)}>
+                <stat.icon className={cn("w-6 h-6", stat.color)} />
+              </div>
+              <span className="text-2xl font-bold text-slate-900">{stat.value}</span>
+            </div>
+            <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div 
-          key={i}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className={cn("p-2 rounded-xl", stat.bg)}>
-              <stat.icon className={cn("w-6 h-6", stat.color)} />
-            </div>
-            <span className="text-2xl font-bold text-slate-900">{stat.value}</span>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-500" />
+              Volume Kegiatan Mingguan
+            </h2>
           </div>
-          <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={activityData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  cursor={{ fill: '#f8fafc' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar dataKey="protokol" name="Protokol" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar dataKey="rumahTangga" name="Rumah Tangga" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </motion.div>
-      ))}
-    </div>
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-slate-400" />
-          Agenda Terdekat
-        </h2>
-        <div className="space-y-4">
-          {agendas.slice(0, 3).map((item, i) => (
-            <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
-              <div className="text-sm font-mono text-slate-500 mt-1">{item.time.split(' - ')[0]}</div>
-              <div>
-                <div className="font-medium text-slate-900">{item.title}</div>
-                <div className="text-xs text-slate-500">{item.location}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5 text-emerald-500" />
+              Status Layanan Rumah Tangga
+            </h2>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Bell className="w-5 h-5 text-slate-400" />
-          Notifikasi Terbaru
-        </h2>
-        <div className="space-y-4">
-          {[
-            { msg: 'Permintaan kendaraan baru dari Sekretariat', time: '10 menit yang lalu' },
-            { msg: 'Draft pidato HUT RI telah diperbarui', time: '1 jam yang lalu' },
-            { msg: 'Konfirmasi kehadiran tamu asing', time: '3 jam yang lalu' },
-          ].map((item, i) => (
-            <div key={i} className="flex items-start gap-3 p-3 border-l-2 border-blue-500 bg-blue-50/30 rounded-r-xl">
-              <div className="flex-1">
-                <div className="text-sm text-slate-800">{item.msg}</div>
-                <div className="text-xs text-slate-500 mt-1">{item.time}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-slate-400" />
+            Agenda Terdekat
+          </h2>
+          <div className="space-y-4">
+            {agendas.slice(0, 3).map((item, i) => (
+              <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                <div className="text-sm font-mono text-slate-500 mt-1">{item.time.split(' - ')[0]}</div>
+                <div>
+                  <div className="font-medium text-slate-900">{item.title}</div>
+                  <div className="text-xs text-slate-500">{item.location}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Bell className="w-5 h-5 text-slate-400" />
+            Notifikasi Terbaru
+          </h2>
+          <div className="space-y-4">
+            {[
+              { msg: 'Permintaan kendaraan baru dari Sekretariat', time: '10 menit yang lalu' },
+              { msg: 'Draft pidato HUT RI telah diperbarui', time: '1 jam yang lalu' },
+              { msg: 'Konfirmasi kehadiran tamu asing', time: '3 jam yang lalu' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 border-l-2 border-blue-500 bg-blue-50/30 rounded-r-xl">
+                <div className="flex-1">
+                  <div className="text-sm text-slate-800">{item.msg}</div>
+                  <div className="text-xs text-slate-500 mt-1">{item.time}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ProtokolView = ({ 
   onAction, 
@@ -808,13 +920,13 @@ export default function App() {
     );
 
     switch (activeView) {
-      case 'dashboard': return <DashboardView onAction={handleAction} agendas={filteredAgendas} />;
+      case 'dashboard': return <DashboardView onAction={handleAction} agendas={filteredAgendas} guests={filteredGuests} services={filteredServices} />;
       case 'protokol': return <ProtokolView onAction={handleAction} guests={filteredGuests} rundown={rundown} onDelete={(id) => handleDelete('tamu', id)} />;
       case 'rumah-tangga': return <RumahTanggaView onAction={handleAction} services={filteredServices} onDelete={(id) => handleDelete('rumah-tangga', id)} />;
       case 'narasi': return <NarasiView onAction={handleAction} drafts={filteredDrafts} searchQuery={searchQuery} onSearchChange={setSearchQuery} onDelete={(id) => handleDelete('narasi', id)} />;
       case 'agenda': return <AgendaView onAction={handleAction} agendas={filteredAgendas} onDelete={(id) => handleDelete('agenda', id)} />;
       case 'dokumentasi': return <DokumentasiView onAction={handleAction} items={filteredDocs} onDelete={(id) => handleDelete('dokumentasi', id)} />;
-      default: return <DashboardView onAction={handleAction} agendas={filteredAgendas} />;
+      default: return <DashboardView onAction={handleAction} agendas={filteredAgendas} guests={filteredGuests} services={filteredServices} />;
     }
   };
 
