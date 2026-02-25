@@ -935,7 +935,7 @@ export default function App() {
 
     switch (activeView) {
       case 'dashboard': return <DashboardView onAction={handleAction} agendas={filteredAgendas} guests={filteredGuests} services={filteredServices} />;
-      case 'protokol': return <ProtokolView onAction={handleAction} guests={filteredGuests} rundown={rundown} onDelete={(id) => handleDelete('tamu', id)} />;
+      case 'protokol': return <ProtokolView onAction={handleAction} guests={filteredGuests} rundown={rundown} onDelete={handleDelete} />;
       case 'rumah-tangga': return <RumahTanggaView onAction={handleAction} services={filteredServices} onDelete={(id) => handleDelete('rumah-tangga', id)} />;
       case 'narasi': return <NarasiView onAction={handleAction} drafts={filteredDrafts} searchQuery={searchQuery} onSearchChange={setSearchQuery} onDelete={(id) => handleDelete('narasi', id)} />;
       case 'agenda': return <AgendaView onAction={handleAction} agendas={filteredAgendas} onDelete={(id) => handleDelete('agenda', id)} />;
