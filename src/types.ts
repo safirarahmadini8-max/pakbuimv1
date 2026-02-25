@@ -39,6 +39,8 @@ export interface SpeechDraft {
   pimpinan: string;
   date: string;
   status: 'Draft' | 'Review' | 'Final';
+  fileName?: string;
+  fileUrl?: string;
 }
 
 export interface HouseholdService {

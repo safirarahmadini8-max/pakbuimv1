@@ -25,7 +25,9 @@ import {
   Edit3,
   Plus,
   TrendingUp,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  File as FileIcon,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -544,7 +546,26 @@ const NarasiView = ({
       {drafts.map((draft, i) => (
         <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 transition-all cursor-pointer group relative">
           <div className="flex justify-between items-start mb-3">
-            <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors pr-16">{draft.title}</h3>
+            <div className="flex-1 pr-16">
+              <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{draft.title}</h3>
+              {draft.fileName && (
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-50 rounded-lg">
+                    <FileIcon className="w-3.5 h-3.5 text-blue-600" />
+                  </div>
+                  <span className="text-[10px] font-medium text-slate-500 truncate max-w-[150px]">{draft.fileName}</span>
+                  <a 
+                    href={draft.fileUrl} 
+                    download={draft.fileName}
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-600 transition-colors"
+                    title="Download File"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
+            </div>
             <div className="flex flex-col items-end gap-2">
               <span className={cn(
                 "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
@@ -1007,12 +1028,27 @@ export default function App() {
           setHouseholdServices([itemData, ...householdServices]);
         }
       } else if (type === 'narasi') {
+        const wordFile = formData.get('wordFile') as File;
+        let fileName = editingItem?.fileName;
+        let fileUrl = editingItem?.fileUrl;
+
+        if (wordFile && wordFile.size > 0) {
+          try {
+            fileName = wordFile.name;
+            fileUrl = await readFileAsDataURL(wordFile);
+          } catch (err) {
+            console.error("Failed to read word file", err);
+          }
+        }
+
         const itemData: SpeechDraft = {
           id: editingItem?.id || Math.random().toString(36).substr(2, 9),
           title: formData.get('title') as string,
           pimpinan: formData.get('pimpinan') as string,
           date: editingItem?.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-          status: editingItem?.status || 'Draft'
+          status: editingItem?.status || 'Draft',
+          fileName,
+          fileUrl
         };
         if (editingItem) {
           setDrafts(drafts.map(d => d.id === editingItem.id ? itemData : d));
@@ -1156,6 +1192,13 @@ export default function App() {
                 <option>Wakil Gubernur</option>
                 <option>Sekretaris Daerah</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Upload File Word (.doc, .docx)</label>
+              <input name="wordFile" type="file" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+              {editingItem?.fileName && (
+                <p className="text-[10px] text-slate-500 mt-1 italic">File saat ini: {editingItem.fileName}</p>
+              )}
             </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all mt-4">
               {editingItem ? 'Update Draft' : 'Buat Draft'}
