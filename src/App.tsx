@@ -819,10 +819,19 @@ export default function App() {
   };
 
   const getModalContent = () => {
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>, type: string) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, type: string) => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       
+      const readFileAsDataURL = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      };
+
       if (type === 'agenda') {
         const itemData: AgendaItem = {
           id: editingItem?.id || Math.random().toString(36).substr(2, 9),
@@ -851,13 +860,19 @@ export default function App() {
           setGuests([itemData, ...guests]);
         }
       } else if (type === 'konsumsi') {
+        const mediaFile = formData.get('media') as File;
+        let fileCount = editingItem?.files || 0;
+        if (mediaFile && mediaFile.size > 0) {
+          fileCount += 1;
+        }
+
         const itemData: HouseholdService = {
           id: editingItem?.id || Math.random().toString(36).substr(2, 9),
           date: formData.get('date') as string,
           agenda: formData.get('agenda') as string,
           location: formData.get('location') as string,
           menu: Array.from(formData.getAll('menu')).join(', '),
-          files: editingItem?.files || 0,
+          files: fileCount,
           status: editingItem?.status || 'Menunggu'
         };
         if (editingItem) {
@@ -891,12 +906,23 @@ export default function App() {
           setRundown([...rundown, itemData].sort((a, b) => a.time.localeCompare(b.time)));
         }
       } else if (type === 'dokumentasi') {
+        const mediaFile = formData.get('media') as File;
+        let mediaUrl = editingItem?.url || `https://picsum.photos/seed/${Math.random()}/800/600`;
+        
+        if (mediaFile && mediaFile.size > 0) {
+          try {
+            mediaUrl = await readFileAsDataURL(mediaFile);
+          } catch (err) {
+            console.error("Failed to read file", err);
+          }
+        }
+
         const itemData: DocumentationItem = {
           id: editingItem?.id || Math.random().toString(36).substr(2, 9),
           title: formData.get('title') as string,
           category: formData.get('category') as any,
           type: formData.get('type') as any,
-          url: formData.get('url') as string || `https://picsum.photos/seed/${Math.random()}/800/600`,
+          url: mediaUrl,
           date: editingItem?.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
         };
         if (editingItem) {
@@ -981,6 +1007,10 @@ export default function App() {
                 ))}
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Upload Foto/Video</label>
+              <input name="media" type="file" accept="image/*,video/*" className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+            </div>
             <button type="submit" className="w-full py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-all mt-4 shadow-lg shadow-amber-500/20">
               {editingItem ? 'Update Pesanan' : 'Simpan Pesanan'}
             </button>
@@ -1052,9 +1082,9 @@ export default function App() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">URL Media (Opsional)</label>
-              <input name="url" defaultValue={editingItem?.url} type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="https://..." />
-              <p className="text-[10px] text-slate-500 mt-1">Kosongkan untuk menggunakan placeholder otomatis.</p>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Pilih File</label>
+              <input name="media" type="file" accept="image/*,video/*" className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+              <p className="text-[10px] text-slate-500 mt-1">Pilih foto atau video dari perangkat Anda.</p>
             </div>
             <button type="submit" className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all mt-4">
               {editingItem ? 'Update Dokumentasi' : 'Upload Dokumentasi'}
