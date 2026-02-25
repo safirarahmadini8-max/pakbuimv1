@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -832,40 +832,54 @@ export default function App() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Helper for persistent state
+  const usePersistentState = <T,>(key: string, initialValue: T) => {
+    const [state, setState] = useState<T>(() => {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : initialValue;
+    });
+
+    useEffect(() => {
+      localStorage.setItem(key, JSON.stringify(state));
+    }, [key, state]);
+
+    return [state, setState] as const;
+  };
+
   // Application State
-  const [agendas, setAgendas] = useState<AgendaItem[]>([
+  const [agendas, setAgendas] = usePersistentState<AgendaItem[]>('pakbuim_agendas', [
     { id: '1', title: 'Apel Pagi & Pengarahan', location: 'Halaman Kantor', date: '2026-02-24', time: '08:00 - 09:30', description: '', status: 'confirmed' },
     { id: '2', title: 'Rapat Paripurna DPRD', location: 'Gedung DPRD', date: '2026-02-24', time: '10:00 - 12:00', description: '', status: 'confirmed' },
     { id: '3', title: 'Audiensi Tokoh Masyarakat', location: 'Ruang Tamu VIP', date: '2026-02-24', time: '13:30 - 15:00', description: '', status: 'pending' },
     { id: '4', title: 'Evaluasi Kinerja Mingguan', location: 'Ruang Kerja', date: '2026-02-24', time: '16:00 - 17:30', description: '', status: 'pending' },
   ]);
 
-  const [guests, setGuests] = useState<Guest[]>([
+  const [guests, setGuests] = usePersistentState<Guest[]>('pakbuim_guests', [
     { id: '1', name: 'Bpk. Ahmad Subarjo', organization: 'Kemendagri', role: 'Pejabat' },
     { id: '2', name: 'Ibu Siti Aminah', organization: 'Pemprov Jatim', role: 'Staf' },
     { id: '3', name: 'Delegasi UNESCO', organization: 'International', role: 'Tamu' },
   ]);
 
-  const [rundown, setRundown] = useState<RundownItem[]>([
+  const [rundown, setRundown] = usePersistentState<RundownItem[]>('pakbuim_rundown', [
     { id: '1', time: '08:00', activity: 'Persiapan Pasukan', pic: 'Danup' },
     { id: '2', time: '08:30', activity: 'Kedatangan Pimpinan', pic: 'Protokol' },
     { id: '3', time: '09:00', activity: 'Upacara Pembukaan', pic: 'MC' },
     { id: '4', time: '10:30', activity: 'Ramah Tamah', pic: 'RT' },
   ]);
 
-  const [drafts, setDrafts] = useState<SpeechDraft[]>([
+  const [drafts, setDrafts] = usePersistentState<SpeechDraft[]>('pakbuim_drafts', [
     { id: '1', title: 'Sambutan Pembukaan Seminar Nasional', pimpinan: 'Gubernur', date: '24 Feb 2026', status: 'Draft' },
     { id: '2', title: 'Pidato Hari Jadi Provinsi ke-78', pimpinan: 'Sekretaris Daerah', date: '22 Feb 2026', status: 'Review' },
     { id: '3', title: 'Sambutan Penerimaan Tamu Asing', pimpinan: 'Gubernur', date: '20 Feb 2026', status: 'Final' },
   ]);
 
-  const [householdServices, setHouseholdServices] = useState<HouseholdService[]>([
+  const [householdServices, setHouseholdServices] = usePersistentState<HouseholdService[]>('pakbuim_services', [
     { id: '1', date: 'Selasa, 24 Feb 2026', agenda: 'Rapat Koordinasi Pimpinan', location: 'Ruang Rapat Utama', menu: 'Snack, Jamuan', files: 2, status: 'Selesai' },
     { id: '2', date: 'Rabu, 25 Feb 2026', agenda: 'Penerimaan Tamu Delegasi', location: 'Lobby VIP', menu: 'Catteriing', files: 0, status: 'Proses' },
     { id: '3', date: 'Kamis, 26 Feb 2026', agenda: 'Kunjungan Kerja', location: 'Sektor Barat', menu: 'Snack', files: 1, status: 'Menunggu' },
   ]);
 
-  const [documentationItems, setDocumentationItems] = useState<DocumentationItem[]>([
+  const [documentationItems, setDocumentationItems] = usePersistentState<DocumentationItem[]>('pakbuim_docs', [
     { id: '1', title: 'Rapat Koordinasi Wilayah', category: 'Protokol', type: 'image', url: 'https://picsum.photos/seed/doc1/800/600', date: '24 Feb 2026' },
     { id: '2', title: 'Penyajian Jamuan Tamu VIP', category: 'Rumah Tangga', type: 'image', url: 'https://picsum.photos/seed/doc2/800/600', date: '23 Feb 2026' },
     { id: '3', title: 'Video Dokumentasi Upacara', category: 'Protokol', type: 'video', url: 'https://picsum.photos/seed/doc3/800/600', date: '22 Feb 2026' },
