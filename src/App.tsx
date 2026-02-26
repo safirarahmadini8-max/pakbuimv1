@@ -517,11 +517,6 @@ const NarasiView = ({
   onDelete: (id: string) => void
 }) => (
   <div className="space-y-6">
-    <header>
-      <h1 className="text-3xl font-bold tracking-tight text-slate-900">Narasi</h1>
-      <p className="text-slate-500">Penyusunan pidato dan sambutan pimpinan.</p>
-    </header>
-
     <div className="flex gap-4 mb-6">
       <div className="flex-1 relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -599,6 +594,12 @@ const NarasiView = ({
               <Clock className="w-3 h-3" />
               {draft.date}
             </div>
+            {draft.officer && (
+              <div className="flex items-center gap-1 text-blue-600 font-medium">
+                <Users className="w-3 h-3" />
+                Piket: {draft.officer}
+              </div>
+            )}
           </div>
         </div>
       ))}
@@ -750,12 +751,19 @@ const AgendaView = ({
 const DokumentasiView = ({ 
   onAction, 
   items, 
+  drafts,
+  searchQuery,
+  onSearchChange,
   onDelete 
 }: { 
   onAction: (type: string, item?: any) => void, 
   items: DocumentationItem[],
-  onDelete: (id: string) => void
+  drafts: SpeechDraft[],
+  searchQuery: string,
+  onSearchChange: (val: string) => void,
+  onDelete: (type: string, id: string) => void
 }) => {
+  const [activeTab, setActiveTab] = useState<'Galeri' | 'Narasi'>('Galeri');
   const [filter, setFilter] = useState<'All' | 'Protokol' | 'Rumah Tangga'>('All');
   
   const filteredItems = items.filter(item => filter === 'All' || item.category === filter);
@@ -764,90 +772,133 @@ const DokumentasiView = ({
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dokumentasi</h1>
-          <p className="text-slate-500">Arsip foto dan video kegiatan.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dokumentasi & Narasi</h1>
+          <p className="text-slate-500">Arsip foto, video, dan naskah pidato kegiatan.</p>
         </div>
-        <button 
-          onClick={() => onAction('dokumentasi')}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Upload Baru
-        </button>
+        {activeTab === 'Galeri' ? (
+          <button 
+            onClick={() => onAction('dokumentasi')}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Upload Baru
+          </button>
+        ) : (
+          <button 
+            onClick={() => onAction('narasi')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Buat Draft Baru
+          </button>
+        )}
       </header>
 
-      <div className="flex gap-2 p-1 bg-slate-100 w-fit rounded-xl">
-        {['All', 'Protokol', 'Rumah Tangga'].map((f) => (
+      <div className="flex gap-4 border-b border-slate-100">
+        {['Galeri', 'Narasi'].map((tab) => (
           <button
-            key={f}
-            onClick={() => setFilter(f as any)}
+            key={tab}
+            onClick={() => setActiveTab(tab as any)}
             className={cn(
-              "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
-              filter === f ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              "px-4 py-2 text-sm font-bold transition-all border-b-2",
+              activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"
             )}
           >
-            {f}
+            {tab}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => (
-          <motion.div 
-            key={item.id}
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group relative"
-          >
-            <div className="aspect-video bg-slate-100 relative overflow-hidden">
-              <img 
-                src={item.url} 
-                alt={item.title} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute top-2 left-2">
-                <span className={cn(
-                  "px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white",
-                  item.category === 'Protokol' ? "bg-purple-600" : "bg-amber-600"
-                )}>
-                  {item.category}
-                </span>
-              </div>
-              {item.type === 'video' && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white">
-                    <Video className="w-6 h-6" />
+      {activeTab === 'Galeri' ? (
+        <div className="space-y-6">
+          <div className="flex gap-2 p-1 bg-slate-100 w-fit rounded-xl">
+            {['All', 'Protokol', 'Rumah Tangga'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f as any)}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  filter === f ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.map((item) => (
+              <motion.div 
+                key={item.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group relative"
+              >
+                <div className="aspect-video bg-slate-100 relative overflow-hidden">
+                  <img 
+                    src={item.url} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <span className={cn(
+                      "px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white",
+                      item.category === 'Protokol' ? "bg-purple-600" : "bg-amber-600"
+                    )}>
+                      {item.category}
+                    </span>
+                  </div>
+                  {item.type === 'video' && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white">
+                        <Video className="w-6 h-6" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">{item.title}</h3>
+                      <p className="text-xs text-slate-500 mt-1">{item.date}</p>
+                      {item.officer && (
+                        <div className="text-[10px] text-blue-600 font-bold mt-1 flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          Piket: {item.officer}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <button 
+                        onClick={() => onAction('dokumentasi', item)}
+                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => onDelete('dokumentasi', item.id)}
+                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-            <div className="p-4">
-              <div className="flex justify-between items-start gap-2">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-sm">{item.title}</h3>
-                  <p className="text-xs text-slate-500 mt-1">{item.date}</p>
-                </div>
-                <div className="flex gap-1">
-                  <button 
-                    onClick={() => onAction('dokumentasi', item)}
-                    className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => onDelete(item.id)}
-                    className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <NarasiView 
+          onAction={onAction} 
+          drafts={drafts} 
+          searchQuery={searchQuery} 
+          onSearchChange={onSearchChange} 
+          onDelete={(id) => onDelete('narasi', id)} 
+        />
+      )}
     </div>
   );
 };
@@ -916,7 +967,6 @@ export default function App() {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'protokol', label: 'Protokol', icon: Users },
     { id: 'rumah-tangga', label: 'Rumah Tangga', icon: Home },
-    { id: 'narasi', label: 'Narasi', icon: FileText },
     { id: 'agenda', label: 'Agenda', icon: Calendar },
     { id: 'dokumentasi', label: 'Dokumentasi', icon: Camera },
   ];
@@ -964,9 +1014,8 @@ export default function App() {
       case 'dashboard': return <DashboardView onAction={handleAction} agendas={filteredAgendas} guests={filteredGuests} services={filteredServices} />;
       case 'protokol': return <ProtokolView onAction={handleAction} guests={filteredGuests} rundown={rundown} onDelete={handleDelete} />;
       case 'rumah-tangga': return <RumahTanggaView onAction={handleAction} services={filteredServices} onDelete={(id) => handleDelete('rumah-tangga', id)} />;
-      case 'narasi': return <NarasiView onAction={handleAction} drafts={filteredDrafts} searchQuery={searchQuery} onSearchChange={setSearchQuery} onDelete={(id) => handleDelete('narasi', id)} />;
       case 'agenda': return <AgendaView onAction={handleAction} agendas={filteredAgendas} onDelete={(id) => handleDelete('agenda', id)} />;
-      case 'dokumentasi': return <DokumentasiView onAction={handleAction} items={filteredDocs} onDelete={(id) => handleDelete('dokumentasi', id)} />;
+      case 'dokumentasi': return <DokumentasiView onAction={handleAction} items={filteredDocs} drafts={filteredDrafts} searchQuery={searchQuery} onSearchChange={setSearchQuery} onDelete={handleDelete} />;
       default: return <DashboardView onAction={handleAction} agendas={filteredAgendas} guests={filteredGuests} services={filteredServices} />;
     }
   };
@@ -1052,6 +1101,7 @@ export default function App() {
           id: editingItem?.id || Math.random().toString(36).substr(2, 9),
           title: formData.get('title') as string,
           pimpinan: formData.get('pimpinan') as string,
+          officer: formData.get('officer') as string,
           date: editingItem?.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
           status: editingItem?.status || 'Draft',
           fileName,
@@ -1091,6 +1141,7 @@ export default function App() {
           title: formData.get('title') as string,
           category: formData.get('category') as any,
           type: formData.get('type') as any,
+          officer: formData.get('officer') as string,
           url: mediaUrl,
           date: editingItem?.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
         };
@@ -1211,6 +1262,10 @@ export default function App() {
                 <p className="text-[10px] text-slate-500 mt-1 italic">File saat ini: {editingItem.fileName}</p>
               )}
             </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Petugas Piket</label>
+              <input name="officer" defaultValue={editingItem?.officer} type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none" placeholder="Nama petugas..." />
+            </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all mt-4">
               {editingItem ? 'Update Draft' : 'Buat Draft'}
             </button>
@@ -1265,6 +1320,10 @@ export default function App() {
               <label className="block text-sm font-bold text-slate-700 mb-1">Pilih File</label>
               <input name="media" type="file" accept="image/*,video/*" className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
               <p className="text-[10px] text-slate-500 mt-1">Pilih foto atau video dari perangkat Anda.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Petugas Piket</label>
+              <input name="officer" defaultValue={editingItem?.officer} type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="Nama petugas..." />
             </div>
             <button type="submit" className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all mt-4">
               {editingItem ? 'Update Dokumentasi' : 'Upload Dokumentasi'}

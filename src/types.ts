@@ -1,4 +1,4 @@
-export type View = 'dashboard' | 'protokol' | 'rumah-tangga' | 'narasi' | 'agenda' | 'dokumentasi';
+export type View = 'dashboard' | 'protokol' | 'rumah-tangga' | 'agenda' | 'dokumentasi';
 
 export interface AgendaItem {
   id: string;
@@ -42,6 +42,7 @@ export interface SpeechDraft {
   status: 'Draft' | 'Review' | 'Final';
   fileName?: string;
   fileUrl?: string;
+  officer?: string;
 }
 
 export interface HouseholdService {
@@ -61,4 +62,5 @@ export interface DocumentationItem {
   type: 'image' | 'video';
   url: string;
   date: string;
+  officer?: string;
 }
