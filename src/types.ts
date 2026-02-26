@@ -51,6 +51,8 @@ export interface HouseholdService {
   agenda: string;
   location: string;
   menu: string;
+  menuDetail?: string;
+  server?: string;
   files: number;
   status: 'Selesai' | 'Proses' | 'Menunggu';
 }

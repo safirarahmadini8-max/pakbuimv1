@@ -444,8 +444,8 @@ const RumahTanggaView = ({
               <th className="px-6 py-3 font-medium">Hari/Tanggal</th>
               <th className="px-6 py-3 font-medium">Agenda</th>
               <th className="px-6 py-3 font-medium">Lokasi</th>
-              <th className="px-6 py-3 font-medium">Menu Konsumsi</th>
-              <th className="px-6 py-3 font-medium">Lampiran</th>
+              <th className="px-6 py-3 font-medium">Pramusaji</th>
+              <th className="px-6 py-3 font-medium">Menu</th>
               <th className="px-6 py-3 font-medium">Status</th>
               <th className="px-6 py-3 font-medium text-right">Aksi</th>
             </tr>
@@ -456,17 +456,23 @@ const RumahTanggaView = ({
                 <td className="px-6 py-4 font-medium text-slate-900">{item.date}</td>
                 <td className="px-6 py-4 text-slate-600">{item.agenda}</td>
                 <td className="px-6 py-4 text-slate-600">{item.location}</td>
+                <td className="px-6 py-4 text-slate-600 font-medium">{item.server || '-'}</td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {item.menu.split(', ').map(m => (
-                      <span key={m} className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-bold uppercase">{m}</span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <FileText className="w-4 h-4" />
-                    <span className="text-xs">{item.files} File</span>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex flex-wrap gap-1">
+                      {item.menu.split(', ').map(m => (
+                        <span key={m} className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-bold uppercase">{m}</span>
+                      ))}
+                    </div>
+                    {item.menuDetail && (
+                      <div className="text-[10px] text-slate-500 italic mt-1 max-w-[200px] truncate" title={item.menuDetail}>
+                        {item.menuDetail}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 text-slate-400 mt-1">
+                      <FileText className="w-3 h-3" />
+                      <span className="text-[10px]">{item.files} Lampiran</span>
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -1075,6 +1081,8 @@ export default function App() {
           agenda: formData.get('agenda') as string,
           location: formData.get('location') as string,
           menu: Array.from(formData.getAll('menu')).join(', '),
+          menuDetail: formData.get('menuDetail') as string,
+          server: formData.get('server') as string,
           files: fileCount,
           status: editingItem?.status || 'Menunggu'
         };
@@ -1221,8 +1229,12 @@ export default function App() {
               <input name="agenda" defaultValue={editingItem?.agenda} required type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 outline-none" placeholder="Nama kegiatan..." />
             </div>
             <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Petugas Pramusaji</label>
+              <input name="server" defaultValue={editingItem?.server} type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 outline-none" placeholder="Nama petugas pramusaji..." />
+            </div>
+            <div>
               <label className="block text-sm font-bold text-slate-700 mb-1">Menu Konsumsi</label>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 mb-2">
                 {['Snack', 'Jamuan', 'Catteriing'].map(menu => (
                   <label key={menu} className="flex items-center gap-2 cursor-pointer group">
                     <input name="menu" value={menu} defaultChecked={editingItem?.menu.includes(menu)} type="checkbox" className="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
@@ -1230,6 +1242,7 @@ export default function App() {
                   </label>
                 ))}
               </div>
+              <textarea name="menuDetail" defaultValue={editingItem?.menuDetail} className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 outline-none text-sm" rows={2} placeholder="Detail menu (entry)..."></textarea>
             </div>
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-1">Upload Foto/Video</label>
