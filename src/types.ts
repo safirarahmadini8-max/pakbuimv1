@@ -8,6 +8,7 @@ export interface AgendaItem {
   location: string;
   description: string;
   status: 'pending' | 'confirmed' | 'completed';
+  officer?: string;
 }
 
 export interface Guest {
